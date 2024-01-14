@@ -26,15 +26,12 @@ def main(params):
     gz_file_name = 'output.csv.gz'
     csv_file_name = 'output.csv'
 
-    os.system(f"wget {URL} -O {gz_file_name}")
-    print('baixei isso aqui')
-    os.system(f"gzip -d {gz_file_name}")
-    os.system(f"ls")
-    print('desipei')
+    os.system(f"wget {URL} -O {gz_file_name}; gzip -d {gz_file_name}")
 
     engine = create_engine(f'postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB}')
 
-    df_iter = pd.read_csv('output.csv', iterator=True, chunksize=100000)
+    df_iter = pd.read_csv('output.csv', chunksize=100000)
+    print(type(df_iter))
     df = df_iter.next()
 
     df.head(n=0).to_sql(name='yellow_taxi_data', con=engine, if_exists='replace')
