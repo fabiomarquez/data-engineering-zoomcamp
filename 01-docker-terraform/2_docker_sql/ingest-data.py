@@ -24,17 +24,17 @@ def main(params):
     URL = params.url
 
     gz_file_name = 'output.csv.gz'
-    csv_file_name = 'output.csv'
 
     os.system(f"wget {URL} -O {gz_file_name}; gzip -d {gz_file_name}")
 
     engine = create_engine(f'postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB}')
 
-    df_iter = pd.read_csv('output.csv', chunksize=100000)
-    print(type(df_iter))
-    df = df_iter.next()
+    df_iter = pd.read_csv('output.csv', iterator=True, chunksize=100000)
+    
+    # corrigir chamada
+    df = df_iter.get_chunk()
 
-    df.head(n=0).to_sql(name='yellow_taxi_data', con=engine, if_exists='replace')
+    df.head(n=0).to_sql(name=TABLE, con=engine, if_exists='replace')
 
     c = 0
     for chunk in df_iter:
