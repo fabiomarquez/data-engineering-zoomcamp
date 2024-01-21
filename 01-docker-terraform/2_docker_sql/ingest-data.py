@@ -13,6 +13,16 @@ def cast_time(df, columns):
         df[column] = pd.to_datetime(df[column])
     return
 
+def extract_file(url):
+    csv_file_name = 'output.csv'
+    gz_file_name = csv_file_name + '.gz'
+    if '.gz' in url:
+        os.system(f"wget {url} -O {gz_file_name}; gzip -d {gz_file_name}")
+    else:
+        os.system(f"wget {url} -O {csv_file_name}")
+    print(f'The file was extracted to {csv_file_name}')
+    return csv_file_name
+
 def main(params):
 
     USER = params.user
@@ -23,28 +33,25 @@ def main(params):
     TABLE = params.table_name
     URL = params.url
 
-    gz_file_name = 'output.csv.gz'
-
-    os.system(f"wget {URL} -O {gz_file_name}; gzip -d {gz_file_name}")
+    file_name = extract_file(URL)
 
     engine = create_engine(f'postgresql://{USER}:{PASSWORD}@{SERVER}:{PORT}/{DB}')
 
-    df_iter = pd.read_csv('output.csv', iterator=True, chunksize=100000)
-    
-    # corrigir chamada
-    df = df_iter.get_chunk()
+    df_head = pd.read_csv(file_name, nrows=1000)
 
-    df.head(n=0).to_sql(name=TABLE, con=engine, if_exists='replace')
+    df_head.head(n=0).to_sql(name=TABLE, con=engine, if_exists='replace')
+
+    df_iter = pd.read_csv(file_name, iterator=True, chunksize=100000, low_memory=False)
 
     c = 0
     for chunk in df_iter:
         t_start = time()
-        cast_time(chunk, ['tpep_pickup_datetime', 'tpep_dropoff_datetime'])
+        if 'tpep_pickup_datetime' in chunk.columns:
+            cast_time(chunk, ['tpep_pickup_datetime', 'tpep_dropoff_datetime'])
         chunk.to_sql(name=TABLE, con=engine, if_exists='append')
         t_end = time()
         c +=1
-        print(f'Finished the {c}º chunk. It took {t_end - t_start}')
-    
+        print(f'Finished the {c}º chunk. It took {(t_end - t_start):.2f} seconds')  
 
     return
 

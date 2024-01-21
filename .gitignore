@@ -1,2 +1,18 @@
 .ipynb_checkpoints
 *.csv
+*.json
+# Terraform gitignore
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+01-docker-terraform/1_terraform_gcp/.terraform.lock.hcl
